@@ -32,7 +32,7 @@ const (
 // A build without it (a fork, a local build) needs the user's own key in the advanced setting.
 var appKey string
 
-// versionFile is the single source of the plugin version: the manifest's version, and also the <version> of the bundled directory (change request 0017).
+// versionFile is the single source of the plugin version: the manifest's version.
 //
 //go:embed VERSION
 var versionFile string
