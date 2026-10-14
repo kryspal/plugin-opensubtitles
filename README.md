@@ -54,6 +54,14 @@ The version number is written only in `VERSION` (embedded with `go:embed`; it is
 
 `go test ./...` (`-short` skips the process test): `subtitles_test.go` runs against a fake HTTPS OpenSubtitles with recorded-shape responses and made-up names and IDs (queries by IDs and hash, title fallback, episodes, hash-only, nothing to ask, language lists, search statuses, login once and reuse, 401 re-login, VIP host rule, quota used up and the reset, reset time parsing, account errors, download errors, spacing, formats); `plugin_test.go` has `TestDescribe`, `TestConfigure` (including a build without a built-in key) and `TestPluginProcess`. Tests never call the real API.
 
+## Official builds and releases
+
+This repository is the source code of the official Kryspal Media `opensubtitles` plugin. Official versions are built by this repository's GitHub Actions workflow from a `v*` tag, attached to a GitHub Release, and then added to the Kryspal Media plugin catalog, which Kryspal signs. The Kryspal Media server installs and updates official plugins from that signed catalog and verifies the signature.
+
+A binary you build from this source yourself is **not** signed by Kryspal and is not part of the official catalog. You are free to build, modify and run it under the Apache License 2.0, but the server treats it as a third-party plugin.
+
+Release process (maintainers): update `VERSION` and `CHANGELOG.md` for any change that alters the binary, wait for the CI workflow to pass on `main`, then push an annotated tag `vX.Y.Z` that matches `VERSION`. The release workflow builds linux/amd64 and linux/arm64 packages, creates the GitHub Release and notifies the main repository, which verifies the packages and publishes the catalog. A published version is never changed.
+
 ## License
 
 Apache License 2.0, see `LICENSE` and `NOTICE`.
