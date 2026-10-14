@@ -10,5 +10,6 @@
     "zh-CN": "从 OpenSubtitles.com 搜索并下载多种语言的字幕，按文件哈希、提供者 ID 或片名匹配。请用你自己的账号登录。"
   },
   "owner": "Kryspal Media",
+  "homepage": "https://github.com/kryspal/plugin-opensubtitles",
   "capabilities": ["subtitles.search"]
 }
