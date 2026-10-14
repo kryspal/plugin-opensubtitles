@@ -1,0 +1,73 @@
+package main
+
+import "github.com/kryspal/plugin-sdk/i18n"
+
+// messages is the declared string table (change request 0057): en, zh-TW and zh-CN; other languages follow the i18n fallback chain, ending in English.
+// The attribution (attribution.text) is the English original, the same in every language, and is not here.
+var messages = i18n.New(messageTables)
+
+var messageTables = map[string]map[string]string{
+	"en": {
+		"desc":            "Finds and downloads subtitles from OpenSubtitles.com, the largest subtitle library, in many languages. It matches by the file's hash first (the same file), then by IMDb or TMDB ID with the season and episode, then by title, and saves the subtitle you choose next to the video. Sign in with your own OpenSubtitles account: searching is not limited, but each account has a daily download allowance, and the plugin reports what is left.",
+		"groupAdvanced":   "Advanced",
+		"userLabel":       "OpenSubtitles user name (not the email address)",
+		"userHelp":        "Your OpenSubtitles.com account (create a free one on the site). Enter the user name, NOT the email address: OpenSubtitles does not accept the email address here.",
+		"userLink":        "Open OpenSubtitles.com",
+		"passLabel":       "OpenSubtitles password",
+		"passHelp":        "The password of that account. It is kept on this server and sent only to OpenSubtitles.",
+		"aiLabel":         "Include machine and AI translations",
+		"aiHelp":          "Off by default. When on, subtitles that were translated by a machine or by AI are searched too; they are usually less accurate.",
+		"keyLabel":        "Your own application key (optional)",
+		"keyHelp":         "Leave empty to use the application key built into this plugin. Only needed for a build without one, or if you prefer your own: create a key under API consumers in your OpenSubtitles account.",
+		"keyLink":         "Create an application key",
+		"baseURLLabel":    "API base URL",
+		"baseURLHelp":     "Leave empty to use the official API. Only for a trusted HTTPS proxy.",
+		"errUserRequired": "Enter your OpenSubtitles user name.",
+		"errUserIsEmail":  "Enter your OpenSubtitles user name, not the email address.",
+		"errPassRequired": "Enter your OpenSubtitles password.",
+		"errNoKey":        "This build has no built-in application key. Enter your own.",
+		"errHTTPS":        "Must be an https:// address.",
+	},
+	"zh-TW": {
+		"desc":            "從 OpenSubtitles.com（最大的字幕庫，語言很多）搜尋並下載字幕。先依檔案雜湊配對（同一個檔案），再依 IMDb 或 TMDB ID 加季與集，最後依片名，並把你選的字幕存到影片旁。請用你自己的 OpenSubtitles 帳號登入：搜尋不限次數，但每個帳號每天有下載額度，外掛會回報剩餘次數。",
+		"groupAdvanced":   "進階",
+		"userLabel":       "OpenSubtitles 使用者名稱（不是電子郵件）",
+		"userHelp":        "你的 OpenSubtitles.com 帳號（可在網站免費註冊）。請填使用者名稱，「不是」電子郵件：OpenSubtitles 不接受用電子郵件登入。",
+		"userLink":        "開啟 OpenSubtitles.com",
+		"passLabel":       "OpenSubtitles 密碼",
+		"passHelp":        "那個帳號的密碼，只保存在這台伺服器上，只會送給 OpenSubtitles。",
+		"aiLabel":         "包含機器與 AI 翻譯的字幕",
+		"aiHelp":          "預設關閉。開啟後也會搜尋機器或 AI 翻譯的字幕，通常準確度較低。",
+		"keyLabel":        "自己的應用程式金鑰（選填）",
+		"keyHelp":         "留空表示使用外掛內建的應用程式金鑰。只有沒有內建金鑰的版本，或你想用自己的金鑰時才需要：在 OpenSubtitles 帳號的 API consumers 建立金鑰。",
+		"keyLink":         "建立應用程式金鑰",
+		"baseURLLabel":    "API 網址",
+		"baseURLHelp":     "留空表示使用官方 API。只用於可信任的 HTTPS 代理。",
+		"errUserRequired": "請填入你的 OpenSubtitles 使用者名稱。",
+		"errUserIsEmail":  "請填寫 OpenSubtitles 使用者名稱，不是電子郵件。",
+		"errPassRequired": "請填入你的 OpenSubtitles 密碼。",
+		"errNoKey":        "這個版本沒有內建應用程式金鑰，請填入你自己的。",
+		"errHTTPS":        "必須是 https:// 網址。",
+	},
+	"zh-CN": {
+		"desc":            "从 OpenSubtitles.com（最大的字幕库，语言很多）搜索并下载字幕。先按文件哈希匹配（同一个文件），再按 IMDb 或 TMDB ID 加季和集，最后按片名，并把你选的字幕保存到视频旁。请用你自己的 OpenSubtitles 账号登录：搜索不限次数，但每个账号每天有下载额度，插件会报告剩余次数。",
+		"groupAdvanced":   "高级",
+		"userLabel":       "OpenSubtitles 用户名（不是邮箱）",
+		"userHelp":        "你的 OpenSubtitles.com 账号（可在网站免费注册）。请填用户名，“不是”邮箱：OpenSubtitles 不接受用邮箱登录。",
+		"userLink":        "打开 OpenSubtitles.com",
+		"passLabel":       "OpenSubtitles 密码",
+		"passHelp":        "那个账号的密码，只保存在这台服务器上，只会发送给 OpenSubtitles。",
+		"aiLabel":         "包含机器与 AI 翻译的字幕",
+		"aiHelp":          "默认关闭。开启后也会搜索机器或 AI 翻译的字幕，通常准确度较低。",
+		"keyLabel":        "自己的应用密钥（选填）",
+		"keyHelp":         "留空表示使用插件内置的应用密钥。只有没有内置密钥的版本，或你想用自己的密钥时才需要：在 OpenSubtitles 账号的 API consumers 创建密钥。",
+		"keyLink":         "创建应用密钥",
+		"baseURLLabel":    "API 网址",
+		"baseURLHelp":     "留空表示使用官方 API。只用于可信任的 HTTPS 代理。",
+		"errUserRequired": "请填入你的 OpenSubtitles 用户名。",
+		"errUserIsEmail":  "请填写 OpenSubtitles 用户名，不是邮箱。",
+		"errPassRequired": "请填入你的 OpenSubtitles 密码。",
+		"errNoKey":        "这个版本没有内置应用密钥，请填入你自己的。",
+		"errHTTPS":        "必须是 https:// 网址。",
+	},
+}

@@ -1,0 +1,14 @@
+{
+  "name": "OpenSubtitles",
+  "nameI18n": {
+    "zh-TW": "OpenSubtitles",
+    "zh-CN": "OpenSubtitles"
+  },
+  "description": "Search and download subtitles in many languages from OpenSubtitles.com, matched by file hash, provider ID or title. Sign in with your own account.",
+  "descriptionI18n": {
+    "zh-TW": "從 OpenSubtitles.com 搜尋並下載多種語言的字幕，依檔案雜湊、提供者 ID 或片名配對。請用你自己的帳號登入。",
+    "zh-CN": "从 OpenSubtitles.com 搜索并下载多种语言的字幕，按文件哈希、提供者 ID 或片名匹配。请用你自己的账号登录。"
+  },
+  "owner": "Kryspal Media",
+  "capabilities": ["subtitles.search"]
+}
