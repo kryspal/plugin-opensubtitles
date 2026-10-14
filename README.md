@@ -1,16 +1,16 @@
 # opensubtitles: OpenSubtitles.com subtitle provider plugin
 
-Owner: A4. Official plugin (closed source, change request 0117), implementing the protocol v1 `SubtitleProvider` service with `github.com/kryspal/plugin-sdk/sdk` (change request 0146, phase 1). It declares the capability `subtitles.search` and no feature code: the host's capability layer (and `SubtitleService`) decides whether subtitle search is licensed, so the plugin itself is never locked and can always be installed, configured and enabled. Paid features are now gated by the host's capability layer instead of the plugin (1.2.1). It is bundled in the image and reserved as an official ID, disabled by default; after the administrator enters their OpenSubtitles account and enables it, the host's subtitle search uses it with the other providers. The plugin only returns bytes; saving next to the video is the host's job.
+An official Kryspal Media plugin that searches and downloads subtitles from OpenSubtitles.com. It implements the protocol v1 `SubtitleProvider` service with [`github.com/kryspal/plugin-sdk`](https://github.com/kryspal/plugin-sdk) and declares the capability `subtitles.search`. It is disabled by default; after the administrator enters their OpenSubtitles account and enables it, the server's subtitle search uses it together with the other providers. The plugin only returns subtitle bytes; saving next to the video is the server's job.
 
 ## Application key (build-time injection)
 
 The OpenSubtitles application (consumer) key belongs to the developer and is sent with every request (`Api-Key`). It is **not in the source**: the release build injects it,
 
 ```
-go build -ldflags "-X main.appKey=$OPENSUBTITLES_CONSUMER_KEY" ./plugins/opensubtitles
+go build -ldflags "-X main.appKey=$OPENSUBTITLES_CONSUMER_KEY" .
 ```
 
-(The release pipeline, owned by A7, passes the key from a CI secret into this flag; the key never appears in logs, `Describe`, tests or the repo.) A build without it (a fork, a local build) works with the user's own key, entered in the advanced setting "Your own application key"; `Configure` reports a field error when neither exists. A user-entered key always wins over the built-in one.
+(The release workflow passes the key from a CI secret into this flag; the key never appears in logs, `Describe`, tests or the repository.) A build without it (a fork, a local build) works with the user's own key, entered in the advanced setting "Your own application key"; `Configure` reports a field error when neither exists. A user-entered key always wins over the built-in one.
 
 ## Account, session and quota
 
@@ -48,8 +48,12 @@ go build -ldflags "-X main.appKey=$OPENSUBTITLES_CONSUMER_KEY" ./plugins/opensub
 
 ## Version and bundling
 
-The version number is written only in `VERSION` (`go:embed`, also the `<version>` of the bundled directory). `deploy/plugins/build.sh` builds it; `CATALOG.json` is the display data for the plugin catalog.
+The version number is written only in `VERSION` (embedded with `go:embed`; it is also the plugin's reported version). `CATALOG.json` holds the display data for the plugin catalog. Releases are built by the CI workflows in `.github/workflows/`: a `v*` tag builds linux/amd64 and linux/arm64 packages and creates a GitHub Release. Any change that alters the binary needs a new `VERSION`; a published version is never changed.
 
 ## Tests
 
-`go test ./plugins/opensubtitles` (`-short` skips the process test): `subtitles_test.go` runs against a fake HTTPS OpenSubtitles with recorded-shape responses and made-up names and IDs (queries by IDs and hash, title fallback, episodes, hash-only, nothing to ask, language lists, search statuses, login once and reuse, 401 re-login, VIP host rule, quota used up and the reset, reset time parsing, account errors, download errors, spacing, formats); `plugin_test.go` has `TestDescribe`, `TestConfigure` (including a build without a built-in key) and `TestPluginProcess`. Tests never call the real API. Manual check (white day, once): a search with the test application key.
+`go test ./...` (`-short` skips the process test): `subtitles_test.go` runs against a fake HTTPS OpenSubtitles with recorded-shape responses and made-up names and IDs (queries by IDs and hash, title fallback, episodes, hash-only, nothing to ask, language lists, search statuses, login once and reuse, 401 re-login, VIP host rule, quota used up and the reset, reset time parsing, account errors, download errors, spacing, formats); `plugin_test.go` has `TestDescribe`, `TestConfigure` (including a build without a built-in key) and `TestPluginProcess`. Tests never call the real API.
+
+## License
+
+Apache License 2.0, see `LICENSE` and `NOTICE`.
