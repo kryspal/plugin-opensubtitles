@@ -174,6 +174,9 @@ func (p *plugin) Search(ctx context.Context, req *pluginv1.SearchSubtitlesReques
 			if by == pluginv1.SubtitleCandidate_MATCHED_BY_NAME {
 				sure[c] = confirmation(t, a.Release, a.FeatureDetails, a.MachineTranslated || a.AITranslated)
 				c.Confirmed = sure[c] != notSure
+				if sure[c] == notSure && otherWork(t, a.FeatureDetails) {
+					c.Score = min(c.Score, otherWorkScore) // a title search also returns works that merely share the year or a word
+				}
 			}
 			out = append(out, c)
 		}
@@ -286,7 +289,15 @@ func searchQueries(t *pluginv1.SubtitleTarget, langs string, hearing, includeAI 
 	if n == 0 && base().Get("moviehash") != "" {
 		qs = append(qs, searchQuery{params: base().Encode(), matchedBy: pluginv1.SubtitleCandidate_MATCHED_BY_NAME})
 	}
-	if title := strings.TrimSpace(t.GetTitle()); len([]rune(title)) >= 2 {
+	// By name: the original title first (OpenSubtitles files works under their original or English titles, not under a title localized for the
+	// library), then the title the host shows.
+	asked := map[string]bool{}
+	for _, title := range []string{t.GetOriginalTitle(), t.GetTitle()} {
+		title = strings.TrimSpace(title)
+		if len([]rune(title)) < 2 || asked[folded(title)] {
+			continue
+		}
+		asked[folded(title)] = true
 		v := base()
 		v.Del("moviehash")
 		v.Set("query", strings.ToLower(title))

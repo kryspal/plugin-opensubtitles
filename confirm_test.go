@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"net/url"
 	"strings"
 	"testing"
 
@@ -112,5 +113,73 @@ func TestHashAndIDMatchesAreNotMarkedConfirmed(t *testing.T) {
 		if c.GetConfirmed() {
 			t.Errorf("hash or ID candidate marked confirmed: %v", c)
 		}
+	}
+}
+
+func TestOtherWork(t *testing.T) {
+	m := &pluginv1.SubtitleTarget{Type: pluginv1.ItemType_ITEM_TYPE_MOVIE, Title: "Made Up Movie", OriginalTitle: "Original Made Up", Year: 2019}
+	for _, tc := range []struct {
+		name string
+		d    featureDetails
+		want bool
+	}{
+		{"no details", featureDetails{}, false},
+		{"same title", featureDetails{Title: "Made Up Movie"}, false},
+		{"original title", featureDetails{Title: "Original Made Up"}, false},
+		{"the title contains the video's", featureDetails{Title: "Made Up Movie 2"}, false},
+		{"another work", featureDetails{Title: "Old People"}, true},
+		{"another work by movie name", featureDetails{MovieName: "Good Kisser (2019)"}, true},
+	} {
+		if got := otherWork(m, tc.d); got != tc.want {
+			t.Errorf("%s: otherWork = %v, want %v", tc.name, got, tc.want)
+		}
+	}
+	if otherWork(&pluginv1.SubtitleTarget{}, featureDetails{Title: "Anything"}) {
+		t.Error("a target with no title is not judged")
+	}
+}
+
+// A title search that also returns other works: they get a low score and stay below the right one; nothing is confirmed for them.
+func TestNameSearchRanksOtherWorksLast(t *testing.T) {
+	f := newFake(t)
+	f.json("/api/v1/subtitles", 200, `{"total_count":3,"data":[
+ {"attributes":{"language":"en","download_count":90000,"release":"Old.People.2019.1080p","files":[{"file_id":1,"file_name":"a.srt"}],"feature_details":{"title":"Old People","year":2019}}},
+ {"attributes":{"language":"en","download_count":5,"release":"Other.Release","files":[{"file_id":2,"file_name":"b.srt"}],"feature_details":{"title":"Made Up Movie","year":2019}}},
+ {"attributes":{"language":"en","download_count":1,"release":"No.Details","files":[{"file_id":3,"file_name":"c.srt"}]}}]}`)
+	p := configured(t, f)
+	target := &pluginv1.SubtitleTarget{Type: pluginv1.ItemType_ITEM_TYPE_MOVIE, Title: "Made Up Movie", Year: 2019, FileName: "x.mkv"}
+	resp, err := p.Search(context.Background(), &pluginv1.SearchSubtitlesRequest{Target: target})
+	if err != nil {
+		t.Fatal(err)
+	}
+	var got []string
+	for _, c := range resp.GetCandidates() {
+		got = append(got, c.GetId())
+	}
+	// 2 is the work (confirmed); 3 has no details (score 0.3); 1 belongs to another work (score at most 0.1) in spite of its downloads.
+	if strings.Join(got, ",") != "2,3,1" {
+		t.Errorf("order = %v, want 2,3,1", got)
+	}
+	for _, c := range resp.GetCandidates() {
+		if c.GetId() == "1" && (c.GetScore() > otherWorkScore || c.GetConfirmed()) {
+			t.Errorf("other work: score %v confirmed %v", c.GetScore(), c.GetConfirmed())
+		}
+	}
+}
+
+// With an original title, the search by name asks for it first and then for the title the host shows.
+func TestNameSearchAsksTheOriginalTitleFirst(t *testing.T) {
+	t1 := &pluginv1.SubtitleTarget{Type: pluginv1.ItemType_ITEM_TYPE_MOVIE, Title: "Local Title", OriginalTitle: "Original Title", Year: 2019}
+	var qs []string
+	for _, q := range searchQueries(t1, "en", false, false) {
+		v, _ := url.ParseQuery(q.params)
+		qs = append(qs, v.Get("query"))
+	}
+	if strings.Join(qs, "|") != "original title|local title" {
+		t.Errorf("queries = %v", qs)
+	}
+	t2 := &pluginv1.SubtitleTarget{Type: pluginv1.ItemType_ITEM_TYPE_MOVIE, Title: "Same Title", OriginalTitle: "same  title!", Year: 2019}
+	if got := searchQueries(t2, "en", false, false); len(got) != 1 {
+		t.Errorf("the same title asked twice: %d queries", len(got))
 	}
 }

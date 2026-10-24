@@ -5,6 +5,8 @@ All notable changes to this plugin are listed here. The version in `VERSION` is 
 ## 1.3.0
 
 - A subtitle found by title is marked confirmed (`SubtitleCandidate.confirmed`) when it was made for this release (its release name equals the video's file name) or OpenSubtitles files it under the video's work (same title or original title, and the same year for a movie, or the same series, season and episode for an episode). Machine and AI translations are never confirmed. A server that downloads subtitles by itself takes hash and ID matches and confirmed candidates, in the order the plugin returns them; candidates are now ordered hash, IDs, made for this release, belongs to this work, then by score. A server that does not know the field ignores it.
+- A search by name now asks for the item's original title first (when the host sends one) and then for the title it shows: OpenSubtitles files works under their original or English titles, not under a title localized for the library. A name match that OpenSubtitles files under a clearly different work (a title that is none of the video's) is scored at most 0.1, so it stays at the end of the list instead of ranking by downloads.
+- The plugin writes one log line per search with counts only (candidates, hash, ids, confirmed).
 - Built with plugin SDK v0.8.0.
 
 ## 1.2.5

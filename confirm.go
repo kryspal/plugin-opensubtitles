@@ -73,6 +73,28 @@ func sameWork(t *pluginv1.SubtitleTarget, d featureDetails) bool {
 	return (d.Title != "" && titles[folded(d.Title)]) || (d.MovieName != "" && titles[folded(d.MovieName)])
 }
 
+// otherWorkScore is the most a name match may score when OpenSubtitles says it belongs to a different work than the video.
+const otherWorkScore = 0.1
+
+// otherWork reports whether OpenSubtitles files the subtitle under a work that is clearly not the video's: it names a title and that title is none of the
+// video's titles. Without details, or with a matching title, the subtitle is not judged.
+func otherWork(t *pluginv1.SubtitleTarget, d featureDetails) bool {
+	name := firstNonEmpty(d.Title, d.MovieName, d.ParentTitle)
+	if name == "" {
+		return false
+	}
+	for _, s := range []string{t.GetTitle(), t.GetOriginalTitle()} {
+		f := folded(s)
+		if f == "" {
+			continue
+		}
+		if f == folded(name) || strings.Contains(folded(name), f) || strings.Contains(f, folded(name)) {
+			return false
+		}
+	}
+	return folded(t.GetTitle()) != "" || folded(t.GetOriginalTitle()) != ""
+}
+
 // How sure the plugin is about a subtitle found by name.
 const (
 	notSure       = iota
