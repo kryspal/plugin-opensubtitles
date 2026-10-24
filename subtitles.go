@@ -110,13 +110,16 @@ func (p *plugin) withSession(ctx context.Context, s settings, fn func(token, bas
 type searchResponse struct {
 	Data []struct {
 		Attributes struct {
-			Language        string  `json:"language"`
-			DownloadCount   int     `json:"download_count"`
-			HearingImpaired bool    `json:"hearing_impaired"`
-			Ratings         float64 `json:"ratings"`
-			Release         string  `json:"release"`
-			MovieHashMatch  bool    `json:"moviehash_match"`
-			Files           []struct {
+			Language          string         `json:"language"`
+			DownloadCount     int            `json:"download_count"`
+			HearingImpaired   bool           `json:"hearing_impaired"`
+			Ratings           float64        `json:"ratings"`
+			Release           string         `json:"release"`
+			MovieHashMatch    bool           `json:"moviehash_match"`
+			MachineTranslated bool           `json:"machine_translated"`
+			AITranslated      bool           `json:"ai_translated"`
+			FeatureDetails    featureDetails `json:"feature_details"`
+			Files             []struct {
 				FileID   int64  `json:"file_id"`
 				FileName string `json:"file_name"`
 			} `json:"files"`
@@ -140,6 +143,7 @@ func (p *plugin) Search(ctx context.Context, req *pluginv1.SearchSubtitlesReques
 	}
 	langs := searchLanguages(req.GetLanguages())
 	var out []*pluginv1.SubtitleCandidate
+	sure := map[*pluginv1.SubtitleCandidate]int{} // how sure the plugin is about a name match
 	seen := map[int64]bool{}
 	for _, q := range searchQueries(t, langs, req.GetIncludeHearingImpaired(), s.includeAI) {
 		var resp searchResponse
@@ -163,15 +167,35 @@ func (p *plugin) Search(ctx context.Context, req *pluginv1.SearchSubtitlesReques
 			if a.MovieHashMatch {
 				by = pluginv1.SubtitleCandidate_MATCHED_BY_HASH
 			}
-			out = append(out, &pluginv1.SubtitleCandidate{Id: strconv.FormatInt(a.Files[0].FileID, 10), Language: bcp47(a.Language),
+			c := &pluginv1.SubtitleCandidate{Id: strconv.FormatInt(a.Files[0].FileID, 10), Language: bcp47(a.Language),
 				ReleaseName: firstNonEmpty(a.Release, a.Files[0].FileName), Format: fileFormat(a.Files[0].FileName), HearingImpaired: a.HearingImpaired,
-				MatchedBy: by, DownloadCount: int32(min(a.DownloadCount, 1<<30)), Rating: min(max(a.Ratings, 0), 10), Score: score(by, a.FromTrusted, a.DownloadCount)})
+				MatchedBy: by, DownloadCount: int32(min(a.DownloadCount, 1<<30)), Rating: min(max(a.Ratings, 0), 10), Score: score(by, a.FromTrusted, a.DownloadCount)}
+			if by == pluginv1.SubtitleCandidate_MATCHED_BY_NAME {
+				sure[c] = confirmation(t, a.Release, a.FeatureDetails, a.MachineTranslated || a.AITranslated)
+				c.Confirmed = sure[c] != notSure
+			}
+			out = append(out, c)
 		}
 		if len(out) > 0 {
 			break // this query found subtitles; the next, looser one is not needed
 		}
 	}
-	sort.SliceStable(out, func(i, j int) bool { return out[i].GetScore() > out[j].GetScore() })
+	// Best first: a hash match, then IDs, then a subtitle made for this release, then one for this work, then the rest; by score within each.
+	rank := func(c *pluginv1.SubtitleCandidate) int {
+		switch c.GetMatchedBy() {
+		case pluginv1.SubtitleCandidate_MATCHED_BY_HASH:
+			return 10
+		case pluginv1.SubtitleCandidate_MATCHED_BY_IDS:
+			return 9
+		}
+		return sure[c]
+	}
+	sort.SliceStable(out, func(i, j int) bool {
+		if ri, rj := rank(out[i]), rank(out[j]); ri != rj {
+			return ri > rj
+		}
+		return out[i].GetScore() > out[j].GetScore()
+	})
 	if len(out) > limit {
 		out = out[:limit]
 	}
