@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"errors"
+	"log/slog"
 	"net/http"
 	"net/url"
 	"path"
@@ -199,7 +200,25 @@ func (p *plugin) Search(ctx context.Context, req *pluginv1.SearchSubtitlesReques
 	if len(out) > limit {
 		out = out[:limit]
 	}
+	logSearch(ctx, out)
 	return &pluginv1.SearchSubtitlesResponse{Candidates: out, QuotaRemaining: p.knownQuota(ctx, s)}, nil
+}
+
+// logSearch writes one line per search: how many candidates, how many by hash, by IDs and confirmed. No titles or names.
+func logSearch(ctx context.Context, out []*pluginv1.SubtitleCandidate) {
+	var hash, ids, confirmed int
+	for _, c := range out {
+		switch {
+		case c.GetMatchedBy() == pluginv1.SubtitleCandidate_MATCHED_BY_HASH:
+			hash++
+		case c.GetMatchedBy() == pluginv1.SubtitleCandidate_MATCHED_BY_IDS:
+			ids++
+		}
+		if c.GetConfirmed() {
+			confirmed++
+		}
+	}
+	slog.InfoContext(ctx, "opensubtitles search", slog.Int("candidates", len(out)), slog.Int("hash", hash), slog.Int("ids", ids), slog.Int("confirmed", confirmed))
 }
 
 type searchQuery struct {
