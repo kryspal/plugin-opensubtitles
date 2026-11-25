@@ -67,3 +67,7 @@ Release process (maintainers): update `VERSION` and `CHANGELOG.md` for any chang
 ## License
 
 Apache License 2.0, see `LICENSE` and `NOTICE`.
+
+## Candidate details (1.4.0)
+
+`details.go`, `addDetails`: copies what the search result gives into the candidate and nothing else. `fps` becomes `frame_rate` (0 and non-numbers stay unknown), `upload_date` becomes `uploaded_at` (YYYY-MM-DD, a value that is not a date stays empty), `machine_translated` or `ai_translated` becomes `machine_translated`, `from_trusted` becomes `trusted`, the number of entries in `files` becomes `file_count`, and `comments` becomes `comment` (one line of plain text, at most 200 characters). `fps`, `upload_date` and `comments` are read loosely: a value of the wrong type is unknown and does not fail the search. `size_bytes` and `duration_seconds` stay 0: the search result has neither. None of this sets `confirmed`. Tests: `details_test.go` (recorded-shape response with every field, with none, and with odd values).

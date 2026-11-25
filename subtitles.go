@@ -110,23 +110,32 @@ func (p *plugin) withSession(ctx context.Context, s settings, fn func(token, bas
 
 type searchResponse struct {
 	Data []struct {
-		Attributes struct {
-			Language          string         `json:"language"`
-			DownloadCount     int            `json:"download_count"`
-			HearingImpaired   bool           `json:"hearing_impaired"`
-			Ratings           float64        `json:"ratings"`
-			Release           string         `json:"release"`
-			MovieHashMatch    bool           `json:"moviehash_match"`
-			MachineTranslated bool           `json:"machine_translated"`
-			AITranslated      bool           `json:"ai_translated"`
-			FeatureDetails    featureDetails `json:"feature_details"`
-			Files             []struct {
-				FileID   int64  `json:"file_id"`
-				FileName string `json:"file_name"`
-			} `json:"files"`
-			FromTrusted bool `json:"from_trusted"`
-		} `json:"attributes"`
+		Attributes subAttributes `json:"attributes"`
 	} `json:"data"`
+}
+
+// subAttributes is what the search returns for one subtitle (the fields this plugin reads).
+type subAttributes struct {
+	Language          string         `json:"language"`
+	DownloadCount     int            `json:"download_count"`
+	HearingImpaired   bool           `json:"hearing_impaired"`
+	Ratings           float64        `json:"ratings"`
+	Release           string         `json:"release"`
+	MovieHashMatch    bool           `json:"moviehash_match"`
+	MachineTranslated bool           `json:"machine_translated"`
+	AITranslated      bool           `json:"ai_translated"`
+	FeatureDetails    featureDetails `json:"feature_details"`
+	Files             []struct {
+		FileID   int64  `json:"file_id"`
+		FileName string `json:"file_name"`
+	} `json:"files"`
+	FromTrusted bool `json:"from_trusted"`
+	// FPS is the frame rate the subtitle is timed for; 0 when OpenSubtitles does not know it.
+	FPS looseNumber `json:"fps"`
+	// UploadDate is an ISO 8601 timestamp such as 2021-03-04T12:00:00Z.
+	UploadDate looseString `json:"upload_date"`
+	// Comments is the uploader's note.
+	Comments looseString `json:"comments"`
 }
 
 // Search asks OpenSubtitles with the provider IDs (and the file hash when there is one); when the IDs find nothing, or there are none, it asks by
@@ -171,6 +180,7 @@ func (p *plugin) Search(ctx context.Context, req *pluginv1.SearchSubtitlesReques
 			c := &pluginv1.SubtitleCandidate{Id: strconv.FormatInt(a.Files[0].FileID, 10), Language: bcp47(a.Language),
 				ReleaseName: firstNonEmpty(a.Release, a.Files[0].FileName), Format: fileFormat(a.Files[0].FileName), HearingImpaired: a.HearingImpaired,
 				MatchedBy: by, DownloadCount: int32(min(a.DownloadCount, 1<<30)), Rating: min(max(a.Ratings, 0), 10), Score: score(by, a.FromTrusted, a.DownloadCount)}
+			addDetails(c, a)
 			if by == pluginv1.SubtitleCandidate_MATCHED_BY_NAME {
 				sure[c] = confirmation(t, a.Release, a.FeatureDetails, a.MachineTranslated || a.AITranslated)
 				c.Confirmed = sure[c] != notSure

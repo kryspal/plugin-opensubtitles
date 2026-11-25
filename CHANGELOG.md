@@ -2,6 +2,11 @@
 
 All notable changes to this plugin are listed here. The version in `VERSION` is the single source of the version number; a published version is never changed.
 
+## 1.4.0
+
+- Candidates now carry what OpenSubtitles says about them, so a person can compare before downloading: frame rate (`fps`), upload date, whether it is machine or AI translated, whether it comes from a trusted uploader, the number of files, and the uploader's comment (plain text, at most 200 characters). A value OpenSubtitles does not give stays unknown; nothing is guessed or taken from the file name. OpenSubtitles gives no download size or duration in a search, so those stay unknown.
+- `confirmed` is unchanged: it is still set only when the plugin is sure the subtitle fits this video, and none of these details set it.
+
 ## 1.3.0
 
 - A subtitle found by title is marked confirmed (`SubtitleCandidate.confirmed`) when it was made for this release (its release name equals the video's file name) or OpenSubtitles files it under the video's work (same title or original title, and the same year for a movie, or the same series, season and episode for an episode). Machine and AI translations are never confirmed. A server that downloads subtitles by itself takes hash and ID matches and confirmed candidates, in the order the plugin returns them; candidates are now ordered hash, IDs, made for this release, belongs to this work, then by score. A server that does not know the field ignores it.
